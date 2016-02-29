@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.dataup.datacenter.dao.PageDao">
+	<select id="queryReportDayUserSubmitTasksCount" resultType="java.lang.Integer">
+			SELECT 
+			  COUNT(*) 
+			FROM
+			  `dc_dimuser_submit_audit_task_staus` a 
+			  INNER JOIN `dim_task_submit_user` b 
+			    ON a.`task_user_key` = b.`id` 
+			    AND system_type = #{systemtype} and username LIKE CONCAT('%',#{userName},'%')
+	</select>
+	<select id="queryReportMonthUserSubmitTasksCount"  resultType="java.lang.Integer">
+<!-- 		SELECT COUNT(*) FROM (SELECT LEFT(_date,7) AS _date,username,truename,SUM(sall) sall,SUM(s2) s2,SUM(s3) s3,SUM(s4) s4,SUM(s8) s8 FROM `dc_dimuser_submit_task_staus` where system_type=#{systemtype} GROUP BY LEFT(_date,7),username) w -->
+<!-- 		WHERE username like concat('%',#{userName},'%') -->
+		 SELECT 
+		  COUNT(*) 
+		FROM
+		  (SELECT 
+		    LEFT(a._date, 7) AS _date,
+		    SUM(a.`sall`) sall,
+		    SUM(a.`s2`) s2,
+		    SUM(a.`s3`) s3,
+		    SUM(a.`s4`) s4,
+		    SUM(a.`s8`) s8,
+		    a.`system_type`,
+		    b.`username`,
+		    b.`truename` 
+		  FROM
+		    `dc_dimuser_submit_audit_task_staus` a 
+		    LEFT JOIN `dim_task_submit_user` b 
+		      ON a.`task_user_key` = b.`id` 
+		  GROUP BY _date,
+		    `task_user_key`,
+		    `system_type` 
+		  HAVING system_type = #{systemtype} and username like concat('%',#{userName},'%')) w 
+	</select>
+	<select id="queryReportDayALLUserSubmitTasksCount" resultType="java.lang.Integer">
+<!-- 		SELECT COUNT(*) FROM (SELECT username,truename,SUM(sall) sall,SUM(s2) s2,SUM(s3) s3,SUM(s4) s4,SUM(s8) s8  -->
+<!-- 		FROM  `dc_dimuser_submit_task_staus` where system_type=#{systemtype}  GROUP BY username ) w where username like concat('%',#{userName},'%') -->
+		SELECT 
+		  COUNT(*) 
+		FROM
+		  (SELECT 
+		    SUM(a.`sall`) sall,
+		    SUM(a.`s2`) s2,
+		    SUM(a.`s3`) s3,
+		    SUM(a.`s4`) s4,
+		    SUM(a.`s8`) s8,
+		    a.`system_type`,
+		    b.`username`,
+		    b.`truename` 
+		  FROM
+		    `dc_dimuser_submit_audit_task_staus` a 
+		    INNER JOIN `dim_task_submit_user` b 
+		      ON a.`task_user_key` = b.`id` 
+		  GROUP BY a.`task_user_key`,
+		    a.`system_type` 
+		  HAVING system_type = #{systemtype} and username like concat('%',#{userName},'%')) w
+	</select>
+	<select id="queryReportDefineSelfUserSubmitTasksCount" resultType="java.lang.Integer">
+		SELECT 
+		  COUNT(*) 
+		FROM
+		  (SELECT 
+		    a.*, b.`username`,
+		    b.`truename` 
+		  FROM
+		    `dc_dimuser_submit_audit_task_staus` a 
+		    LEFT JOIN `dim_task_submit_user` b 
+		      ON a.`task_user_key` = b.`id` 
+		  GROUP BY _date,
+		    `task_user_key`,
+		    `system_type` 
+		  HAVING system_type = #{systemtype} and username like concat('%',#{userName},'%') and _date between #{startDate} and #{endDate} ) w 
+	</select>
+	<select id="queryReportUserWhereCityCount" resultType="java.lang.Integer">
+		 SELECT COUNT(*) FROM (SELECT city,COUNT(DISTINCT bid) total FROM `fack_user` a  WHERE `user_type_key` = 1 
+		  AND `user_enable_key` = 1 AND city IS NOT NULL GROUP BY city) w 
+	</select>
+	
+	<select id="queryReportDayUserCollectTasksCount" resultType="java.lang.Integer">
+		 SELECT COUNT(*) FROM  dc_dimuser_audit_detail where system_type=#{systemtype} and username like concat('%',#{userName},'%')
+	</select>
+	<select id="queryReportDayUserDefindCollectTasksCount" resultType="java.lang.Integer">
+		 SELECT  COUNT(*) FROM `dc_dimuser_audit_detail` where system_type=#{systemtype} and _date between #{startDate} and #{endDate} and username like concat('%',#{userName},'%')
+	</select>
+	<select id="queryReportDayCollectTasksCount" resultType="java.lang.Integer">
+		 SELECT COUNT(*) FROM  dc_dimdata_audit_detail where system_type=#{systemtype}
+	</select>
+	<select id="queryReportDaySelfCollectTasksCount" resultType="java.lang.Integer">
+		 SELECT COUNT(*) FROM  dc_dimdata_audit_detail  where system_type=#{systemtype} and _date between #{startDate} and #{endDate}
+	</select>
+	
+	<select id="queryReportDaySubmitTasksClassCount" resultType="java.lang.Integer">
+		select COUNT(*) from dc_dimdata_submit_task_class
+	</select>
+
+	<select id="queryReportMonthSubmitTasksClassCount" resultType="java.lang.Integer">
+		SELECT COUNT(*) FROM (SELECT LEFT(_date,7) AS _date,
+		SUM(sall) sall,SUM(s1) s1,SUM(s2) s2,SUM(s3) s3,SUM(s4) s4,SUM(s5) s5,SUM(s6) s6,SUM(s7) s7,SUM(s8) s8,SUM(s9) s9,SUM(s10) s10,
+		  SUM(s11) s11,SUM(s12) s12,SUM(s13) s13 FROM `dc_dimdata_submit_task_class` GROUP BY LEFT(_date,7)) w 
+	</select>
+	
+	<select id="queryReportDaySelfSubmitTasksClassCount" resultType="java.lang.Integer">
+		select COUNT(*) from dc_dimdata_submit_task_class where _date between #{startDate} and #{endDate}
+	</select>
+	
+	
+	<select id="queryReportDayDataSubmitTasksCount" resultType="java.lang.Integer">
+<!-- 		select COUNT(*) from dc_dimdata_submit_task_staus where system_type=#{systemtype} -->
+		SELECT COUNT(*) FROM  dc_dimdata_submit_task_staus  WHERE system_type=#{systemtype}
+	</select>
+	<select id="queryReportMonthDataSubmitTasksCount" resultType="java.lang.Integer">
+<!-- 		SELECT COUNT(*) FROM (SELECT LEFT(_date,7) AS _date,SUM(sall) sall,SUM(s2) s2,SUM(s3) s3,SUM(s4) s4,SUM(s8) s8 FROM `dc_dimdata_submit_task_staus` where system_type=#{systemtype} GROUP BY LEFT(_date,7)) w  -->
+		SELECT 
+		  COUNT(*) 
+		FROM
+		  (SELECT 
+		    LEFT(_date, 7) _date,
+		    system_type,
+		    SUM(sall) sall,
+		    SUM(s2) s2,
+		    SUM(s3) s3,
+		    SUM(s4) s4,
+		    SUM(s8) s8 
+		  FROM
+		    dc_dimdata_submit_task_staus 
+		  GROUP BY system_type) w 
+		WHERE system_type = #{systemtype}
+	</select>
+	<select id="queryReportSelfDataSubmitTasksCount" resultType="java.lang.Integer">
+		select COUNT(*) from dc_dimdata_submit_task_staus where system_type=#{systemtype} and  _date between #{startDate} and #{endDate}
+	</select>
+	
+</mapper>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.dataup.datacenter.dao.UserTaskDao">
+
+	<!-- 意图想通过获得组和组中的所有student,此处相当于one2many -->
+	<resultMap type="cn.dataup.datacenter.entity.UserTask" id="getUserTaskAndSub">
+		<id column="id" property="taskId" />
+		<result column="time" property="taskTime" />
+		<collection property="uTaskSubList"
+			ofType="cn.dataup.datacenter.entity.UserTaskDetail" column="fk"><!-- 注意此处的group_id是student表的外键 -->
+			<id column="id" property="taskSubId" />
+			<result column="userid" property="userId" />
+			<result column="username" property="userName" />
+			<result column="bigname" property="bigName" />
+			<result column="collectnum" property="collectNum" />
+			<result column="trueName" property="trueName" />
+		</collection>
+	</resultMap>
+	<select id="fecthUserCollectQty" resultMap="getUserTaskAndSub">
+			SELECT 
+			  c.time,
+			  CONCAT(d.username,'-',d.truename) AS bigname,
+			  d.* 
+			FROM
+			  dc_user_task c 
+			  INNER JOIN 
+			    (SELECT 
+			      b.*,
+			      a.truename 
+			    FROM
+			      dc_user_task_detail a 
+			      INNER JOIN 
+			        (SELECT DISTINCT 
+			          MAX(id) id,
+			          userid,
+			          username,
+			          fk,
+			          SUM(collectnum) AS collectnum 
+			        FROM
+			          dc_user_task_detail 
+			        GROUP BY userid,
+			          username) b 
+			        ON a.`id` = b.`id`) d 
+			    ON c.id = d.fk ORDER BY collectnum DESC LIMIT 1,10
+	</select>
+	<select id="findMaxRegsUpDay" parameterType="java.lang.Integer"
+		resultType="java.lang.Integer">
+		SELECT id FROM vw_get_day_id
+		WHERE day_in_month = #{day}
+		AND
+		year = #{year}
+		AND month = #{month}
+	</select>
+	<select id="findUserRegsByKey" parameterType="java.lang.Integer"
+		resultType="cn.dataup.datacenter.entity.RegsUser">
+		SELECT * FROM dc_user_regs
+		WHERE user_reg_day_key = #{key}
+	</select>
+	<select id="findUserRegsIdByTime" parameterType="java.lang.Integer"
+		resultType="cn.dataup.datacenter.entity.RegsUserDateUp">
+		SELECT
+		a.*,
+		dur.`day_total` AS regsCount ,dur.`id`
+		FROM
+		(SELECT
+		CONCAT(
+		`year`,
+		RIGHT(CONCAT(00, `month`), 2),
+		RIGHT(CONCAT('00',
+		day_in_month), 2)
+		) AS daytime,
+		id AS userRegsKye,
+		YEAR,
+		MONTH,
+		day_in_month AS DAY
+		FROM
+		vw_get_day_id) a
+		LEFT OUTER JOIN `dc_user_regs`
+		dur
+		ON dur.`user_reg_day_key` = a.userRegsKye
+		WHERE a.daytime &gt;
+		#{before}
+		AND
+		a.daytime
+		&lt; #{now}
+	</select>
+
+	<select id="findRegsUserInfoListByKey" parameterType="java.lang.Integer"
+		resultType="cn.dataup.datacenter.entity.RegsUserInfo">
+		SELECT * FROM dc_user_regs_detail
+		WHERE dc_user_regs_key =
+		#{userRegsKye}
+	</select>
+
+</mapper>

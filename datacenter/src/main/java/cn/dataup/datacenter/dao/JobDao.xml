@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.dataup.datacenter.dao.JobDao">
+	<!-- 用户分布 -->
+	<select id="queryJobMobileUserRegs" resultType="cn.dataup.datacenter.entity.JobUserInfo">
+ 		SELECT 
+		  NAME,
+		  mobile
+		FROM
+		  `fack_user` a 
+		WHERE `user_type_key` = 1 
+		  AND `user_enable_key` = 1 
+		  AND mobile IS NOT NULL
+		  AND city IS NULL 
+		GROUP BY bid,update_date
+		HAVING update_date = 
+		  (SELECT 
+		    MAX(update_date) 
+		  FROM
+		    `fack_user` 
+		  WHERE (`fack_user`.`bid` = `a`.`bid`)) ORDER BY mobile DESC  
+	</select>
+	<select id="updateUserWhereCity">
+		 UPDATE fack_user SET city=#{city} WHERE mobile=#{mobile} AND name=#{userName}
+	</select>
+	
+	<select id="queryJobUserIdCard" resultType="cn.dataup.datacenter.entity.JobUserInfo">
+ 		SELECT 
+		  NAME,
+		  idcard
+		FROM
+		  `fack_user`
+		WHERE `user_type_key` = 1 
+		  AND `user_enable_key` = 1 AND idcard IS NOT NULL AND (age=0  OR age IS NULL)
+	</select>
+	
+	<select id="updateUserAgeByIdCard">
+ 		UPDATE fack_user SET age=#{age} WHERE name=#{userName}
+	</select>
+	<select id="isExistTaskPoints" resultType="java.lang.Integer">
+ 		select count(*) from dw_mongodb_point WHERE TASK_ID=#{taskId} and LAT=#{lat} and LON=#{lon}
+	</select>
+	<select id="insertTaskPoints">
+ 		INSERT INTO dw_mongodb_point(TASK_ID,LAT,LON) VALUES(#{taskId},#{lat},#{lon})
+	</select>
+</mapper>

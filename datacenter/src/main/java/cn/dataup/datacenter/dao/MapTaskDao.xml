@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.dataup.datacenter.dao.MapTaskDao">
+ 
+	<select id="queryAudited" resultType="cn.dataup.datacenter.entity.MapTask">
+		SELECT * FROM dw_tasks_point where SYSTEM_TYPE=#{system} and status_=#{status}
+	</select>
+ 
+ 	<select id="queryAuditing" resultType="cn.dataup.datacenter.entity.MapTask">
+		SELECT a.*,b.task_user_key FROM `dw_tasks_point` a INNER JOIN(
+			SELECT 
+			  bid,
+			  task_status_key,
+			  task_user_key 
+			FROM
+			  fack_task 
+			GROUP BY bid,
+			  system_type 
+			HAVING COUNT(*) = 1 
+			  AND task_status_key NOT IN (3, 4)) b ON a.task_id=b.bid AND a.`STATUS_` NOT IN (3,4) and a.`system_type`=#{system}
+	</select>
+</mapper>

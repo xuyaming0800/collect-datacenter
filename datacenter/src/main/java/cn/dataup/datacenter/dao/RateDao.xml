@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.dataup.datacenter.dao.RateDao">
+ 
+	<select id="queryAuditRate" resultType="cn.dataup.datacenter.entity.ReportAuditRate">
+		SELECT distinct * FROM dc_audit_rate_all where system_type=#{system_type}
+	</select>
+	
+	<select id="queryMonthAuditRate" resultType="cn.dataup.datacenter.entity.ReportAuditRate">
+ 		SELECT * FROM `dc_audit_rate_month` where system_type=#{system_type}
+	</select>
+	
+	<select id="updateAuditRate" resultType="java.lang.Integer">
+		UPDATE 
+		  dc_audit_rate_month t,
+		  vw_task_firsttask_month_num t1 
+		SET
+		  t.first_audit_num = t1.first_audit_num 
+		WHERE t._date = t1._date 
+	</select>
+	<select id="updateAuditRate1" resultType="java.lang.Integer">
+		UPDATE 
+		  dc_audit_rate_month t,
+		  vw_task_firsttask_pass_month_num t2 
+		SET
+		  t.`first_audit_pass_num` = t2.`first_audit_pass_num` 
+		WHERE t.`_date` = t2.`_date` 
+	</select>
+	<select id="updateAuditRate2" resultType="java.lang.Integer">
+		UPDATE 
+		  dc_audit_rate_month t,
+		  vw_task_inspection_month_num t3 
+		SET
+		  t.`inspection_num` = t3.`inspection_num` 
+		WHERE t.`_date` = t3.`_date` 
+	</select>
+	<select id="updateAuditRate3" resultType="java.lang.Integer">
+		UPDATE 
+		  dc_audit_rate_month t,
+		  vw_task_inspection_pass_month_num t4 
+		SET
+		  t.`inspection_pass_num` = t4.`inspection_pass_num` 
+		WHERE t.`_date` = t4.`_date`
+	</select>
+	<select id="updateAuditRate4" resultType="java.lang.Integer">
+		UPDATE 
+		  dc_audit_rate_month t,
+		  vw_task_appeal_month_num t5 
+		SET
+		  t.`appeal_num` = t5.`appeal_num` 
+		WHERE t.`_date` = t5.`_date`
+	</select>
+	<select id="updateAuditRate5" resultType="java.lang.Integer">
+		UPDATE 
+		  dc_audit_rate_month t,
+		  vw_task_appeal_pass_month_num t6 
+		SET
+		  t.`appeal_pass_num` = t6.`appeal_pass_num` 
+		WHERE t.`_date` = t6.`_date` 
+	</select>
+	<select id="updateAuditRate6" resultType="java.lang.Integer">
+		UPDATE 
+		  dc_audit_rate_month t,
+		  vw_task_audit_fail_month_num t7 
+		SET
+		  t.`audit_fail_num` = t7.`audit_fail_num` 
+		WHERE t.`_date` = t7.`_date`  
+	</select>
+ 
+</mapper>

@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.dataup.datacenter.dao.ReportDao">
+
+	<resultMap type="cn.dataup.datacenter.entity.ReportDayUserRegs" id="reportDayUserRegs">
+			<result column="_date" property="regDate" />
+			<result column="day_total" property="dayTotal" />
+			<result column="total" property="tatal" />
+	</resultMap>
+	
+	<select id="queryReportDayUserRegs" resultMap="reportDayUserRegs">
+		 select _date,day_total from vw_report_day_user_regs order by _date desc LIMIT #{start},#{size}
+	</select>
+	<select id="queryReportMonthUserRegs" resultMap="reportDayUserRegs">
+		 select sRegDate,day_total from vw_report_month_user_regs LIMIT #{start},#{size}
+	</select>
+	<select id="queryReportMonthUserRegsCount" resultType="java.lang.Integer">
+		 select count(*) from vw_report_month_user_regs
+	</select>
+	<select id="queryReportAllUserRegs" resultMap="reportDayUserRegs">
+		SELECT 
+		  DATE_FORMAT(
+		    FROM_UNIXTIME((MAX(`fack_user`.`create_date`) / 1000)),
+		    '%Y-%m-%d'
+		  ) AS `_date`,
+		  COUNT(DISTINCT `fack_user`.`bid`) AS `day_total` 
+		FROM
+		  `fack_user`  
+		WHERE 
+		    (`fack_user`.`user_type_key` = 1) 
+		    AND (
+		      `fack_user`.`user_enable_key` = 1
+		    )
+		ORDER BY _date DESC
+	</select>
+	
+	<!-- 用户所在地 -->
+	<select id="queryReportWhereUserRegs" resultType="cn.dataup.datacenter.entity.RegsUserInfo">
+		SELECT 
+		  name,
+		  truename,
+		  IFNULL(mobile,'') mobile,
+		  IFNULL(city,'') city,
+		  IF(idcard IS NULL,'否','是') verifyIdCardName,
+		  SUM(withdrawaccount) AS withdrawaccount,
+		  age
+		FROM
+		  `fack_user` a 
+		WHERE `user_type_key` = 1 
+		  AND `user_enable_key` = 1 
+		  AND name like concat('%',#{userName},'%')
+		GROUP BY bid,update_date
+		HAVING update_date = 
+		  (SELECT 
+		    MAX(update_date) 
+		  FROM
+		    `fack_user` 
+		  WHERE (`fack_user`.`bid` = `a`.`bid`)) ORDER BY create_date DESC LIMIT #{start},#{size} 
+	</select>
+	<select id="queryUserRegsPageCount" resultType="java.lang.Integer">
+		 SELECT 
+		  IF(
+		    COUNT(DISTINCT bid)  &lt; 5,
+		    1,
+		    ROUND(COUNT(DISTINCT bid) / 10, 0)
+		  ) pageCount 
+		FROM
+		  fack_user 
+		WHERE `user_type_key` = 1 
+		  AND `user_enable_key` = 1 
+		  AND NAME LIKE CONCAT('%', #{userName}, '%')
+	</select>
+	
+	<select id="queryReportUserWhereCity" resultType="cn.dataup.datacenter.entity.RegsUserInfo">
+		 SELECT 
+		  city,
+		  COUNT(DISTINCT bid) total
+		FROM
+		  `fack_user` a 
+		WHERE `user_type_key` = 1 
+		  AND `user_enable_key` = 1 
+		  AND city IS NOT NULL
+		GROUP BY city order by total desc LIMIT #{start},#{size}
+	</select>
+	
+	<select id="queryReportUserRegsTotal" resultType="java.lang.Integer">
+		 SELECT SUM(day_total) total FROM vw_report_day_user_regs
+	</select>
+	
+	<select id="queryReportUserRegsCount" resultType="java.lang.Integer">
+		 SELECT count(*) records FROM vw_report_day_user_regs
+	</select>
+	
+	<!-- 审核明细-用户 -->
+	<select id="queryReportDayUserCollectTasks" resultType="cn.dataup.datacenter.entity.ReportUserCollectTasks">
+ 		SELECT * FROM `dc_dimuser_audit_detail` WHERE system_type=#{systemtype} and username LIKE CONCAT('%',#{userName},'%') ORDER BY _date DESC LIMIT #{start},#{size}
+	</select>
+	
+	<select id="queryReportDayUserDefindCollectTasks" resultType="cn.dataup.datacenter.entity.ReportUserCollectTasks">
+	    SELECT  * FROM `dc_dimuser_audit_detail` where system_type=#{systemtype} and _date between #{startDate} and #{endDate} and username like concat('%',#{userName},'%') LIMIT #{start},#{size}
+	</select>
+	
+	<!-- 审核明细-数据 -->
+	<select id="queryReportDayCollectTasks" resultType="cn.dataup.datacenter.entity.ReportUserCollectTasks">
+		SELECT * from dc_dimdata_audit_detail where system_type=#{systemtype} ORDER BY _date DESC LIMIT #{start},#{size}
+	</select>
+	
+	<select id="queryReportDaySelfCollectTasks" resultType="cn.dataup.datacenter.entity.ReportUserCollectTasks">
+		SELECT * from dc_dimdata_audit_detail where system_type=#{systemtype} and _date between #{startDate} and #{endDate} LIMIT #{start},#{size}
+	</select>
+	 
+	<!-- class -->
+	<!-- all -->
+	<select id="queryReportSubmitTasksClass" resultType="cn.dataup.datacenter.entity.ReportSubmitTasksClass">
+		SELECT 
+		  SUM(sall) sall,SUM(s1) s1,SUM(s2) s2,SUM(s3) s3,SUM(s4) s4,SUM(s5) s5,SUM(s6) s6,SUM(s7) s7,SUM(s8) s8,SUM(s9) s9,
+		  SUM(s10) s10,SUM(s11) s11,SUM(s12) s12,SUM(s13) s13 FROM  `dc_dimdata_submit_task_class` ORDER BY _date DESC
+	</select>
+	<!-- self -->
+	<select id="queryReportDaySelfSubmitTasksClass" resultType="cn.dataup.datacenter.entity.ReportSubmitTasksClass">
+		select * from dc_dimdata_submit_task_class where _date between #{startDate} and #{endDate} LIMIT #{start},#{size}
+	</select>
+	 
+	<!-- day -->
+	<select id="queryReportDaySubmitTasksClass" resultType="cn.dataup.datacenter.entity.ReportSubmitTasksClass">
+		select * from dc_dimdata_submit_task_class ORDER BY _date DESC LIMIT #{start},#{size}
+	</select>
+	
+	<!-- month -->
+	<select id="queryReportMonthSubmitTasksClass" resultType="cn.dataup.datacenter.entity.ReportSubmitTasksClass">
+		SELECT LEFT(_date,7) AS _date,
+		  SUM(sall) sall,SUM(s1) s1,SUM(s2) s2,SUM(s3) s3,SUM(s4) s4,SUM(s5) s5,SUM(s6) s6,SUM(s7) s7,SUM(s8) s8,SUM(s9) s9,
+		  SUM(s10) s10,SUM(s11) s11,SUM(s12) s12,SUM(s13) s13 FROM  `dc_dimdata_submit_task_class`  GROUP BY LEFT(_date,7)  ORDER BY _date DESC
+		  LIMIT #{start},#{size}
+	</select>
+	
+	
+	<!-- 用户提交任务报表 -->
+	<select id="queryReportDayUserSubmitTasks" resultType="cn.dataup.datacenter.entity.ReportSubmitTask">
+<!-- 		SELECT * from dc_dimuser_submit_task_staus where username like concat('%',#{userName},'%') ORDER BY _date DESC LIMIT #{start},#{size}  -->
+<!-- 			SELECT * FROM (SELECT * FROM dc_dimuser_submit_task_staus WHERE username LIKE CONCAT('%',#{userName},'%') ORDER BY _date DESC) w LIMIT #{start},#{size} -->
+		SELECT 
+		  a.*,
+		  b.`username`,
+		  b.`truename` 
+		FROM
+		  `dc_dimuser_submit_audit_task_staus` a 
+		  INNER JOIN `dim_task_submit_user` b 
+		    ON a.`task_user_key` = b.`id` 
+		    AND a.system_type = #{systemtype} and b.username LIKE CONCAT('%',#{userName},'%') ORDER BY a._date DESC LIMIT #{start},#{size} 
+	</select>
+	<select id="queryReportDefineSelfUserSubmitTasks" resultType="cn.dataup.datacenter.entity.ReportSubmitTask">
+			SELECT 
+			  a.*,
+			  b.`username`,
+			  b.`truename` 
+			FROM
+			  `dc_dimuser_submit_audit_task_staus` a 
+			  LEFT JOIN `dim_task_submit_user` b 
+			    ON a.`task_user_key` = b.`id` 
+			GROUP BY _date,
+			  `task_user_key`,
+			  `system_type` 
+			HAVING system_type = #{systemtype} and username like concat('%',#{userName},'%') and _date between #{startDate} and #{endDate} ORDER BY _date DESC LIMIT #{start},#{size}
+	</select>
+	<select id="queryReportDayALLUserSubmitTasks" resultType="cn.dataup.datacenter.entity.ReportSubmitTask">
+<!-- 		SELECT username,truename,SUM(sall) sall,SUM(s2) s2,SUM(s3) s3,SUM(s4) s4,SUM(s8) s8  FROM `dc_dimuser_submit_task_staus` where system_type=#{systemtype} and username like concat('%',#{userName},'%')   GROUP BY username -->
+<!-- 		LIMIT #{start},#{size} -->
+			SELECT 
+			  SUM(a.`sall`) sall,
+			  SUM(a.`s2`) s2,
+			  SUM(a.`s3`) s3,
+			  SUM(a.`s4`) s4,
+			  SUM(a.`s8`) s8,
+			  a.`system_type`,
+			  b.`username`,
+			  b.`truename` 
+			FROM
+			  `dc_dimuser_submit_audit_task_staus` a 
+			  INNER JOIN `dim_task_submit_user` b 
+			    ON a.`task_user_key` = b.`id` 
+			GROUP BY a.`task_user_key`,
+			  a.`system_type` 
+			HAVING system_type = #{systemtype} and username LIKE CONCAT('%',#{userName},'%') ORDER BY _date DESC LIMIT #{start},#{size}
+	</select>
+	<select id="queryReportMonthUserSubmitTasks"  resultType="cn.dataup.datacenter.entity.ReportSubmitTask">
+<!-- 		SELECT LEFT(_date,7) AS _date,username,truename,SUM(sall) sall,SUM(s2) s2,SUM(s3) s3,SUM(s4) s4,SUM(s8) s8,system_type FROM `dc_dimuser_submit_task_staus` where system_type=#{systemtype} and username like concat('%',#{userName},'%')  GROUP BY LEFT(_date,7),username -->
+<!-- 		 ORDER BY LEFT(_date,7) desc LIMIT #{start},#{size}  -->
+		 	SELECT 
+			    LEFT(a._date, 7) AS _date,
+			    SUM(a.`sall`) sall,
+			    SUM(a.`s2`) s2,
+			    SUM(a.`s3`) s3,
+			    SUM(a.`s4`) s4,
+			    SUM(a.`s8`) s8,
+			    a.`system_type`,
+			    b.`username`,
+			    b.`truename` 
+			  FROM
+			    `dc_dimuser_submit_audit_task_staus` a 
+			    LEFT JOIN `dim_task_submit_user` b 
+			      ON a.`task_user_key` = b.`id` 
+			  GROUP BY _date,
+			    `task_user_key`,
+			    `system_type` 
+			  HAVING system_type = #{systemtype} and username like concat('%',#{userName},'%')  ORDER BY LEFT(_date,7) desc LIMIT #{start},#{size}
+	</select>
+	
+	
+	<!-- 提交任务报表-数据维度 -->
+	<select id="queryReportDayDataSubmitTasks" resultType="cn.dataup.datacenter.entity.ReportSubmitTask">
+<!-- 		SELECT * from dc_dimdata_submit_task_staus ORDER BY _date DESC LIMIT #{start},#{size} -->
+<!-- 		SELECT * FROM (SELECT * FROM dc_dimdata_submit_task_staus where system_type=#{systemtype} ORDER BY _date DESC ) w  LIMIT #{start},#{size} -->
+			SELECT 
+			  * 
+			FROM
+			  dc_dimdata_submit_task_staus 
+			WHERE system_type = #{systemtype} ORDER BY _date DESC LIMIT #{start},#{size}
+	</select>
+	<select id="queryReportDayALLDataSubmitTasks" resultType="cn.dataup.datacenter.entity.ReportSubmitTask">
+			SELECT 
+			  system_type,
+			  SUM(sall) sall,
+			  SUM(s2) s2,
+			  SUM(s3) s3,
+			  SUM(s4) s4,
+			  SUM(s8) s8 
+			FROM
+			  dc_dimdata_submit_task_staus 
+			GROUP BY system_type 
+			HAVING system_type = #{systemtype} ORDER BY _date DESC
+	</select>
+	<select id="queryReportMonthDataSubmitTasks" resultType="cn.dataup.datacenter.entity.ReportSubmitTask">
+<!-- 		SELECT LEFT(_date,7) AS _date,SUM(sall) sall,SUM(s2) s2,SUM(s3) s3,SUM(s4) s4,SUM(s8) s8,system_type FROM `dc_dimdata_submit_task_staus` where system_type=#{systemtype} GROUP BY LEFT(_date,7) LIMIT #{start},#{size} -->
+			SELECT 
+			  LEFT(_date, 7) _date,
+			  system_type,
+			  SUM(sall) sall,
+			  SUM(s2) s2,
+			  SUM(s3) s3,
+			  SUM(s4) s4,
+			  SUM(s8) s8 
+			FROM
+			  dc_dimdata_submit_task_staus 
+			GROUP BY system_type 
+			HAVING system_type = #{systemtype} ORDER BY _date DESC LIMIT #{start},#{size}
+	</select>
+	<select id="queryReportSelfDataSubmitTasks" resultType="cn.dataup.datacenter.entity.ReportSubmitTask">
+		SELECT * from dc_dimdata_submit_task_staus  where system_type=#{systemtype} and _date between #{startDate} and #{endDate} LIMIT #{start},#{size}
+	</select>
+	
+</mapper>
